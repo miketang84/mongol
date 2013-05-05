@@ -6,6 +6,7 @@ local assert , pcall = assert , pcall
 local ipairs , pairs = ipairs , pairs
 local unpack = unpack
 local setmetatable = setmetatable
+local coroutine = coroutine
 local floor = math.floor
 local strbyte , strchar = string.byte , string.char
 local strsub = string.sub
@@ -13,6 +14,7 @@ local t_insert , t_concat = table.insert , table.concat
 
 local attachpairs_start = misc.attachpairs_start
 
+local ev = require 'ev'
 local socket = require "socket"
 
 local md5 = require "md5"
@@ -36,17 +38,27 @@ local new_cursor = require ( mod_name .. ".cursor" )
 local connmethods = { }
 local connmt = { __index = connmethods }
 
-local function connect ( host , port )
+local flag_embed_bamboo = false
+local function connect ( host , port, loop, cb)
 	host = host or "localhost"
 	port = port or 27017
 
 	local sock = socket.connect ( host , port )
-
-	return setmetatable ( {
-			host = host ;
-			port = port ;
-			sock = sock ;
-		} , connmt )
+  local conn_obj = {
+    host = host ;
+    port = port ;
+    sock = sock ;
+  }
+  
+  if cb and loop then
+    local fd = sock.getfd()
+    local io_watcher = ev.IO.new(cb, fd, ev.READ)
+    io_watcher:start(loop)
+    conn_obj.io_watcher = io_watcher
+    flag_embed_bamboo = true
+  end
+  
+	return setmetatable (conn_obj, connmt)
 end
 
 local opcodes = {
@@ -93,7 +105,13 @@ local function docmd ( conn , opcode , message ,  reponseTo )
 
 	local m = compose_msg ( requestID , reponseTo , opcode , message )
 	local sent = assert ( conn.sock:send ( m ) )
-
+  if flag_embed_bamboo then
+    -- yield here to wait the mongo's response.
+    bamboo.SUSPENDED_TASKS[conn.io_watcher] = coroutine.running()
+    coroutine.yield()
+    -- id is the id of send command time, which can be used as the request
+    -- key responding to this coroutine
+  end
 	return id , sent
 end
 
@@ -194,6 +212,13 @@ function dbmethods:query ( collection , query , returnfields , numberToSkip , nu
 		.. query .. returnfields
 
 	local req_id = docmd ( self.conn , "QUERY" , m )
+  -- self.conn.sock is the socket obj, self.conn.sock is the fd of it.
+  -- 1. create this connection, get its fd;
+  -- 2. add this fd to libev IO watcher:  self.io_read = ev.IO.new(read_cb, fd, ev.READ)
+	-- 3. start this watcher:  self.io_read:start(loop)
+  -- 4. note the args. read_cb(loop, io, revents)  loop must be passed in.
+  
+  
 	return handle_reply ( self.conn , req_id , numberToSkip )
 end
 

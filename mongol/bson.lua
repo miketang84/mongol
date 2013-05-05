@@ -9,6 +9,7 @@ local t_insert = table.insert
 local t_concat = table.concat
 local strformat = string.format
 local strmatch = string.match
+local strbyte = string.byte
 
 local ll = require ( mod_name .. ".ll" )
 local le_uint_to_num = ll.le_uint_to_num
@@ -61,14 +62,14 @@ local function read_document ( get , numerical )
 			else
 				error ( f:byte ( ) )
 			end
-		elseif op == "9" then -- unix time
+		elseif op == "\9" then -- unix time
 			v = le_uint_to_num ( get ( 8 ) , 1 , 8 )
 		elseif op == "\10" then -- Null
 			v = nil
 		elseif op == "\16" then --int32
 			v = le_int_to_num ( get ( 4 ) , 1 , 8 )
 		else
-			error ( "Unknown BSON type" .. strbyte ( op ) )
+			error ( "Unknown BSON type " .. strbyte ( op ) )
 		end
 
 		if numerical then

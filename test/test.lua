@@ -40,15 +40,26 @@ m:insert ( collection , { { a = "lol" ; b = 3 } } )
 m:insert ( collection , { { a = "lol" ; b = 4 } } )
 m:insert ( collection , { { a = "lol" ; b = 5 } } )
 
+print(collection, m:count ( collection ))
 assert ( m:count ( collection ) == 5 )
+
+require 'lglib'
 
 do
 	local cursor = m:find ( collection , { } , { b = true } )
 	for i , item in cursor:pairs ( ) do
+    ptable(item)
 		assert ( item.a == nil and item.b == i )
 	end
 end
 
+
+do
+	local cursor = m:find ( collection , { })
+	for i , item in cursor:pairs ( ) do
+    ptable(item)
+	end
+end
 
 collectgarbage"step"
 collectgarbage"step"
