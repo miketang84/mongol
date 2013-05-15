@@ -38,12 +38,13 @@ local new_cursor = require ( mod_name .. ".cursor" )
 local connmethods = { }
 local connmt = { __index = connmethods }
 
-local flag_bamboo = false
+local flag_async = false
 local function connect ( host , port, loop, cb)
 	host = host or "localhost"
 	port = port or 27017
 
 	local sock = socket.connect ( host , port )
+	assert(sock, 'mongodb connect failed.')
   --print('establish sock', sock)
   local conn_obj = {
     host = host ;
@@ -56,7 +57,7 @@ local function connect ( host , port, loop, cb)
     local io_watcher = ev.IO.new(cb, fd, ev.READ)
     io_watcher:start(loop)
     conn_obj.io_watcher = io_watcher
-    flag_bamboo = true
+    flag_async = true
   end
   
 	return setmetatable (conn_obj, connmt)
@@ -107,16 +108,6 @@ local function docmd ( conn , opcode , message ,  reponseTo )
 	local m = compose_msg ( requestID , reponseTo , opcode , message )
   -- send query queue to mongodb
 	local sent = assert ( conn.sock:send ( m ) )
-  if flag_bamboo then
-    -- yield here to wait the mongo's response.
---    bamboo.SUSPENDED_TASKS[conn.io_watcher] = coroutine.running()
---    bamboo.SUSPENDED_SOCKETS[conn.io_watcher] = conn
-    --print('before yield', conn.io_watcher)
---    coroutine.yield('yield_from_pdb')
-    --print('after yield', conn.io_watcher)
-    -- id is the id of send command time, which can be used as the request
-    -- key responding to this coroutine
-  end
 	return id , sent
 end
 
@@ -164,10 +155,17 @@ function dbmethods:kill_cursors ( collection , cursorIDs )
 end
 
 local function handle_reply ( conn , req_id , offset_i )
+  	if flag_async then
+    		-- yield here to wait the mongo's response.
+	   	bamboo.SUSPENDED_TASKS[conn.io_watcher] = coroutine.running()
+    		bamboo.SUSPENDED_SOCKETS[conn.io_watcher] = conn
+    		coroutine.yield('mongo_yield')
+  	end
+
 	offset_i = offset_i  or 0
 
 	local r_len , r_req_id , r_res_id , opcode = read_msg_header ( conn.sock )
-  --print('req_id, r_res_id', req_id, r_res_id)
+  	--print('req_id, r_res_id', req_id, r_res_id)
 	--assert ( req_id == r_res_id )
 	assert ( opcode == opcodes.REPLY )
 	local data = assert ( conn.sock:receive ( r_len - 16 ) )
