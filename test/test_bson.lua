@@ -16,6 +16,7 @@ local o = {
 	--z = { [{}] = {} } ; -- Can't test as tables are unique
 }
 local b = to_bson ( o )
+print(#b, type(b), b)
 local t = from_bson ( getlib.get_from_string ( b ) )
 
 local function confirm ( orig , new , d )

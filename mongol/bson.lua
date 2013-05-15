@@ -139,6 +139,7 @@ function to_bson ( ob )
 	local onlyarray = true
 	local seen_n , high_n = { } , 0
 	local onlystring = true
+	local i = 0
 	for k , v in pairs ( ob ) do
 		local t_k = type ( k )
 		onlystring = onlystring and ( t_k == "string" )
@@ -153,7 +154,10 @@ function to_bson ( ob )
 			end
 		end
 		if not onlyarray and not onlystring then break end
+		i = i + 1
 	end
+	-- for empty table, we consider it as array, rather than object
+	if i == 0 then onlystring = false end
 
 	local retarray , m = false
 	if onlystring then -- Do string first so the case of an empty table is done properly
