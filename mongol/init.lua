@@ -44,7 +44,7 @@ local function connect ( host , port, loop, cb)
 	port = port or 27017
 
 	local sock = socket.connect ( host , port )
-  print('establish sock', sock)
+  --print('establish sock', sock)
   local conn_obj = {
     host = host ;
     port = port ;
@@ -109,11 +109,11 @@ local function docmd ( conn , opcode , message ,  reponseTo )
 	local sent = assert ( conn.sock:send ( m ) )
   if flag_bamboo then
     -- yield here to wait the mongo's response.
-    bamboo.SUSPENDED_TASKS[conn.io_watcher] = coroutine.running()
-    bamboo.SUSPENDED_SOCKETS[conn.io_watcher] = conn
-    print('before yield', conn.io_watcher)
-    coroutine.yield('yield_from_pdb')
-    print('after yield', conn.io_watcher)
+--    bamboo.SUSPENDED_TASKS[conn.io_watcher] = coroutine.running()
+--    bamboo.SUSPENDED_SOCKETS[conn.io_watcher] = conn
+    --print('before yield', conn.io_watcher)
+--    coroutine.yield('yield_from_pdb')
+    --print('after yield', conn.io_watcher)
     -- id is the id of send command time, which can be used as the request
     -- key responding to this coroutine
   end
@@ -167,7 +167,7 @@ local function handle_reply ( conn , req_id , offset_i )
 	offset_i = offset_i  or 0
 
 	local r_len , r_req_id , r_res_id , opcode = read_msg_header ( conn.sock )
-  print('req_id, r_res_id', req_id, r_res_id)
+  --print('req_id, r_res_id', req_id, r_res_id)
 	--assert ( req_id == r_res_id )
 	assert ( opcode == opcodes.REPLY )
 	local data = assert ( conn.sock:receive ( r_len - 16 ) )
