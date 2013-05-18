@@ -30,4 +30,22 @@ for i, item in cursor:pairs() do
 	print(i, item)
 	
   fptable(item)
+  print(item._id)
+  print(type(item._id.id), #(item._id.id))
+  b = item._id
+end
+
+local ObjectId = (require 'mongol.object_id').ObjectId
+a = ObjectId('50f64665a5f48e2c49000001')
+print(type(a), a==b)
+
+local cursor = db:find('users', {_id=ObjectId('50f64665a5f48e2c49000001')}, {username=true})
+
+for i, item in cursor:pairs() do
+	print(i, item)
+	
+  fptable(item)
+  print(item._id)
+  print(type(item._id.id), #(item._id.id))
+  b = item._id.id
 end

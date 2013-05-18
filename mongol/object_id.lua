@@ -1,8 +1,9 @@
 local mod_name = (...):match ( "^(.*)%..-$" )
 
 local setmetatable = setmetatable
-local strbyte = string.byte
+local strbyte, strchar = string.byte, string.char
 local strformat = string.format
+local strsub = string.sub
 local t_insert = table.insert
 local t_concat = table.concat
 
@@ -19,7 +20,7 @@ local object_id_mt = {
 		for i = 1 , 12 do
 			t_insert ( t , strformat ( "%02x" , strbyte ( ob.id , i , i ) ) )
 		end
-		return "ObjectId(" .. t_concat ( t ) .. ")"
+		return "ObjectId('" .. t_concat ( t ) .. "')"
 	end ;
 	__eq = function ( a , b ) return a.id == b.id end ;
 }
@@ -41,10 +42,11 @@ end
 pid = num_to_le_uint ( pid , 2 )
 
 local inc = 0
-local function generate_id ( )
-	inc = inc + 1
-	-- "A BSON ObjectID is a 12-byte value consisting of a 4-byte timestamp (seconds since epoch), a 3-byte machine id, a 2-byte process id, and a 3-byte counter. Note that the timestamp and counter fields must be stored big endian unlike the rest of BSON"
-	return num_to_be_uint ( os.time ( ) , 4 ) .. machineid .. pid .. num_to_be_uint ( inc , 3 )
+local function generate_id ()
+  inc = inc + 1
+  -- "A BSON ObjectID is a 12-byte value consisting of a 4-byte timestamp (seconds since epoch), a 3-byte machine id, a 2-byte process id, and a 3-byte counter. Note that the timestamp and counter fields must be stored big endian unlike the rest of BSON"
+  return num_to_be_uint ( os.time ( ) , 4 ) .. machineid .. pid .. num_to_be_uint ( inc , 3 )
+
 end
 
 local function new_object_id ( str )
@@ -56,7 +58,30 @@ local function new_object_id ( str )
 	return setmetatable ( { id = str } , object_id_mt )
 end
 
+local function makeObjectId (str)
+  if str then
+    assert(type(str) == 'string' and #str == 24, 'wrong ObjectId string')
+    local t
+    local time = tonumber(strsub(str, 1, 8), 16)
+    local part1 = num_to_be_uint ( time , 4 )
+    local r_t = {}
+    for i=4, 8 do
+      t = tonumber(strsub(str, 2*i+1, 2*i+2), 16)
+      t_insert(r_t, strchar(t))
+    end
+    local part2 = t_concat(r_t)
+    local part3 = num_to_be_uint(tonumber(strsub(str, 19, 24), 16), 3)
+    
+    local binstr = part1 .. part2 .. part3
+    return setmetatable({id=binstr}, object_id_mt)
+  else
+    -- create new object id
+    return new_object_id();
+  end
+end
+
 return {
+  ObjectId = makeObjectId,
 	new = new_object_id ;
 	metatable = object_id_mt ;
 }

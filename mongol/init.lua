@@ -14,7 +14,6 @@ local t_insert , t_concat = table.insert , table.concat
 
 local attachpairs_start = misc.attachpairs_start
 
-local ev = require 'ev'
 local socket = require "socket"
 
 local md5 = require "md5"
@@ -53,6 +52,7 @@ local function connect ( host , port, loop, cb)
   }
   
   if cb and loop then
+    local ev = require 'ev'
     local fd = sock:getfd()
     local io_watcher = ev.IO.new(cb, fd, ev.READ)
     io_watcher:start(loop)
@@ -266,6 +266,7 @@ function dbmethods:listcollections ( )
 	return self:find ( "system.namespaces" , { } )
 end
 
+
 function dbmethods:drop ( collection )
 	return assert ( self.conn:cmd ( self.db , { drop = collection } ) )
 end
@@ -310,6 +311,7 @@ function connmethods:databases ( )
 	return r.databases
 end
 
+
 function connmethods:shutdown ( )
 	pcall ( self.cmd , self , "admin" , { shutdown = true } )
 end
@@ -344,6 +346,14 @@ function connmethods:new_db_handle ( db )
 		} , dbmt )
 end
 
-connmt.__call = connmethods.new_db_handle
+-- alias
+connmethods.use = connmethods.new_db_handle
+connmethods.showDbs = connmethods.databases
+dbmethods.showCollections = dbmethods.listDatabases
+dbmethods.remove = dbmethods.delete
+
+
+
+connmt.__call = connmethods.use
 
 return connect
