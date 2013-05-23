@@ -8,12 +8,13 @@ local strformat = string.format
 local cursor_methods = { }
 local cursor_mt = { __index = cursor_methods }
 
-local function new_cursor ( conn , collection , query , returnfields )
+local function new_cursor ( conn , collection , query , returnfields, numberToSkip )
 	return setmetatable ( {
 			conn = conn ;
 			collection = collection ;
 			query = query ;
 			returnfields = returnfields ;
+      numberToSkip = numberToSkip or 0;
 
 			id = false ;
 			results = { } ;
@@ -47,7 +48,7 @@ function cursor_methods:next ( )
 
 	local t
 	if not self.id then
-		self.id , self.results , t = self.conn:query ( self.collection , self.query , self.returnfields , self.i , 0 )
+		self.id , self.results , t = self.conn:query ( self.collection , self.query , self.returnfields , self.numberToSkip + self.i , 0 )
 		if self.id == "\0\0\0\0\0\0\0\0" then
 			self.done = true
 		end
