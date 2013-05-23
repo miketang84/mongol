@@ -238,6 +238,18 @@ end
 -- returns a cursor
 dbmethods.find = new_cursor
 
+-- short cut for find
+-- return result immediately
+function dbmethods:findOne(collection, query, returnfields, numberToSkip)
+  local cursorId, ret = self:query(collection, query, returnfields, numberToSkip, 1)
+  if #ret == 1 then
+    return ret[1]
+  else 
+    return nil
+  end
+end
+
+
 function connmethods:cmd ( db , q , collection )
 	collection = collection or "$cmd"
 	local h = self:new_db_handle ( db )
