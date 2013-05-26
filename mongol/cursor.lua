@@ -68,4 +68,13 @@ function cursor_methods:pairs ( )
 	return self.next , self
 end
 
+function cursor_methods:all ( )
+	local ret = {}
+  for i, v in self:pairs() do
+    t_insert(ret, v)
+  end
+  return ret
+end
+
+
 return new_cursor
