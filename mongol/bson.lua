@@ -147,7 +147,7 @@ function to_bson ( ob )
 			if t_k == "number" and k >= 0 then
 				if k > high_n then
 					high_n = k
-					seen_n [ k ] = v
+					seen_n [ k-1 ] = v
 				end
 			else
 				onlyarray = false
@@ -169,14 +169,16 @@ function to_bson ( ob )
 	elseif onlyarray then
 		local r = { }
 
-		local low = 1
-		if seen_n [ 0 ] then low = 0 end
+		local low = 0
+		-- if seen_n [ 0 ] then low = 0 end
 
-		for i=1 , high_n do
+    -- for mongo internal, array start from 0 index
+		for i=0 , high_n-1 do
 			r [ i ] = pack ( i , seen_n [ i ] )
 		end
-
-		m = t_concat ( r , "" , low , high_n )
+    
+    -- print('low, high_n', low, high_n)
+		m = t_concat ( r , "" , low , high_n-1 )
 		retarray = true
 	else
 		local ni = 1
