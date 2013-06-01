@@ -73,7 +73,10 @@ local function read_document ( get , numerical )
 		end
 
 		if numerical then
-			t [ tonumber ( e_name ) ] = v
+      -- tg add
+			-- t [ tonumber ( e_name ) ] = v
+      -- for lua array, start from 1, always +1
+			t [ tonumber ( e_name ) + 1 ] = v
 		else
 			t [ e_name ] = v
 		end
