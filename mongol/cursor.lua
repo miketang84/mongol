@@ -14,13 +14,14 @@ local p = function (t)
   end
 end
 
-local function new_cursor ( conn , collection , query , returnfields, numberToSkip)
+local function new_cursor ( conn , collection , query , returnfields, numberToSkip, numberToReturn)
 	return setmetatable ( {
 			conn = conn ;
 			collection = collection ;
 			query = query ;
 			returnfields = returnfields ;
       numberToSkip = numberToSkip or 0;
+      numberToReturn = numberToReturn or 0;
 
 			id = false ;
 			results = { } ;
@@ -53,11 +54,11 @@ function cursor_methods:next ( )
 		return self.i , v
 	end
 
-	if self.done then return nil end
+	if self.done or self.i + 1 > self.numberToReturn then return nil end
 
 	local t
 	if not self.id then
-		self.id , self.results , t = self.conn:query ( self.collection , self.query , self.returnfields , self.numberToSkip + self.i, 0)
+		self.id , self.results , t = self.conn:query ( self.collection , self.query , self.returnfields , self.numberToSkip + self.i, self.numberToReturn)
 		if self.id == "\0\0\0\0\0\0\0\0" then
 			self.done = true
 		end
@@ -93,6 +94,8 @@ function cursor_methods:each (func)
     r = func(v)
     if r then 
       t_insert(ret, r)
+    elseif r == false then
+      break
     end
   end
   return ret
