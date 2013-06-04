@@ -54,7 +54,10 @@ function cursor_methods:next ( )
 		return self.i , v
 	end
 
-	if self.done or self.i + 1 > self.numberToReturn then return nil end
+	if self.done 
+	or self.numberToReturn > 0 and self.i + 1 > self.numberToReturn then 
+	return nil 
+	end
 
 	local t
 	if not self.id then
