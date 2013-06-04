@@ -249,6 +249,13 @@ function dbmethods:findOne(collection, query, returnfields, numberToSkip)
   end
 end
 
+function dbmethods:findMany(collection, query, returnfields, numberToSkip, numberReturned)
+  local cursorId, ret = self:query(collection, query, returnfields, numberToSkip, numberReturned or 1)
+  
+  return ret
+end
+
+
 
 function connmethods:cmd ( db , q , collection )
 	collection = collection or "$cmd"
