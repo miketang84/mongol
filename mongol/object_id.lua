@@ -20,7 +20,8 @@ local object_id_mt = {
 		for i = 1 , 12 do
 			t_insert ( t , strformat ( "%02x" , strbyte ( ob.id , i , i ) ) )
 		end
-		return "ObjectId('" .. t_concat ( t ) .. "')"
+		--return "ObjectId('" .. t_concat ( t ) .. "')"
+		return t_concat ( t )
 	end ;
 	__eq = function ( a , b ) return a.id == b.id end ;
 }

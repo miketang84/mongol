@@ -12,7 +12,7 @@ local strbyte , strchar = string.byte , string.char
 local strsub = string.sub
 local t_insert , t_concat = table.insert , table.concat
 
-local attachpairs_start = misc.attachpairs_start
+--local attachpairs_start = misc.attachpairs_start
 
 local socket = require "socket"
 
@@ -182,7 +182,7 @@ local function handle_reply ( conn , req_id , offset_i )
 	t.ShardConfigStale = le_bpeek ( responseFlags , 2 )
 	t.AwaitCapable = le_bpeek ( responseFlags , 3 )
 
-	local r = { }
+	local r = {}
 	for i = 1 , t.numberReturned do
 		r [ i + offset_i ] = from_bson ( get )
 	end
@@ -274,10 +274,15 @@ function connmethods:cmd ( db , q , collection )
 end
 
 function dbmethods:count ( collection , query )
-	local r = assert ( self.conn:cmd ( self.db , attachpairs_start ( {
+--[[	local r = assert ( self.conn:cmd ( self.db , attachpairs_start ( {
 			count = collection ;
 			query = query or { } ;
 		} , "count" ) ) )
+--]]
+	local r = assert ( self.conn:cmd ( self.db, {
+			{'count', collection},
+            {'query', query or {}},
+		}) )
 	return r.n
 end
 
@@ -349,12 +354,24 @@ function dbmethods:auth ( username , password )
 
 	local digest = md5hex ( r.nonce .. username .. pass_digest ( username , password ) )
 
+--[[
 	return self.conn:cmd ( self.db , attachpairs_start ({
+			--authenticate = true ;
 			authenticate = true ;
 			user = username ;
 			nonce = r.nonce ;
 			key = digest ;
 		 } , "authenticate" ) ) ~= nil
+--]]
+---[[	
+    return self.conn:cmd ( self.db ,{
+			--authenticate = true ;
+            {'authenticate', true },
+            {'user', username },
+            {'nonce', r.nonce },
+            {'key', digest }
+		 })  ~= nil
+--]]
 end
 
 function connmethods:new_db_handle ( db )

@@ -175,6 +175,19 @@ function to_bson ( ob )
 		local low = 0
 		-- if seen_n [ 0 ] then low = 0 end
 
+        local ordermap = true
+        for i, v in ipairs(ob) do
+            if #v ~= 2 then
+                ordermap = false
+                break
+            end
+        end
+        if ordermap then
+		    for i=0 , high_n-1 do
+			    t_insert(r, pack ( seen_n[i][1] , seen_n[i][2] ))
+		    end
+            m = t_concat(r)
+        else
     -- for mongo internal, array start from 0 index
 		for i=0 , high_n-1 do
 			r [ i ] = pack ( i , seen_n [ i ] )
@@ -183,6 +196,7 @@ function to_bson ( ob )
     -- print('low, high_n', low, high_n)
 		m = t_concat ( r , "" , low , high_n-1 )
 		retarray = true
+        end
 	else
 		local ni = 1
 		local keys , vals = { } , { }
