@@ -183,8 +183,10 @@ function to_bson ( ob )
             end
         end
         if ordermap then
-		    for i=0 , high_n-1 do
-			    t_insert(r, pack ( seen_n[i][1] , seen_n[i][2] ))
+		    for i, v in ipairs(ob) do
+			if v[1] and v[2] then
+			    t_insert(r, pack ( v[1], v[2] ))
+		    	end
 		    end
             m = t_concat(r)
         else
