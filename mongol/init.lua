@@ -34,6 +34,9 @@ local from_bson = bson.from_bson
 
 local new_cursor = require ( mod_name .. ".cursor" )
 
+local ObjectId = require "mongol.object_id" 
+-- export ObjectId to global env.
+
 local connmethods = { }
 local connmt = { __index = connmethods }
 
@@ -292,11 +295,13 @@ end
 
 
 function dbmethods:drop ( collection )
-	return assert ( self.conn:cmd ( self.db , { drop = collection } ) )
+	--return assert ( self.conn:cmd ( self.db , { drop = collection } ) )
+	return self.conn:cmd ( self.db , { drop = collection } )
 end
 
 function dbmethods:dropDatabase ( )
-	return assert ( self.conn:cmd ( self.db , { dropDatabase = true } ) )
+	--return assert ( self.conn:cmd ( self.db , { dropDatabase = true } ) )
+	return self.conn:cmd ( self.db , { dropDatabase = true } )
 end
 
 function connmethods:ismaster ( )

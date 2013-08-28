@@ -22,6 +22,7 @@ local getlib = require ( mod_name .. ".get" )
 local read_terminated_string = getlib.read_terminated_string
 
 local obid = require ( mod_name .. ".object_id" )
+local ObjectId = obid
 local new_object_id = obid.new
 local object_id_mt = obid.metatable
 
@@ -175,30 +176,28 @@ function to_bson ( ob )
 		local low = 0
 		-- if seen_n [ 0 ] then low = 0 end
 
-        local ordermap = true
-        for i, v in ipairs(ob) do
-            if #v ~= 2 then
-                ordermap = false
-                break
-            end
+    local ordermap = true
+    for i, v in ipairs(ob) do
+        local vtype = type(v)
+	if vtype ~= 'table' or #v ~= 2 then ordermap = false; break end
+    end
+    if ordermap then
+      for i, v in ipairs(ob) do
+        if v[1] and v[2] then
+          t_insert(r, pack ( v[1], v[2] ))
         end
-        if ordermap then
-		    for i, v in ipairs(ob) do
-			if v[1] and v[2] then
-			    t_insert(r, pack ( v[1], v[2] ))
-		    	end
-		    end
-            m = t_concat(r)
-        else
-    -- for mongo internal, array start from 0 index
-		for i=0 , high_n-1 do
-			r [ i ] = pack ( i , seen_n [ i ] )
-		end
-    
-    -- print('low, high_n', low, high_n)
-		m = t_concat ( r , "" , low , high_n-1 )
-		retarray = true
-        end
+      end
+      m = t_concat(r)
+    else
+      -- for mongo internal, array start from 0 index
+      for i=0 , high_n-1 do
+        r [ i ] = pack ( i , seen_n [ i ] )
+      end
+      
+      -- print('low, high_n', low, high_n)
+      m = t_concat ( r , "" , low , high_n-1 )
+      retarray = true
+    end
 	else
 		local ni = 1
 		local keys , vals = { } , { }
