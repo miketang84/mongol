@@ -41,7 +41,6 @@ local connmethods = { }
 local connmt = { __index = connmethods }
 
 local flag_async = false
-local _gconfig = {}
 
 local function connect ( host , port, loop, cb)
 	host = host or "localhost"
@@ -49,46 +48,34 @@ local function connect ( host , port, loop, cb)
 
 	local sock = socket.connect ( host , port )
 	assert(sock, 'mongodb connect failed.')
-  --print('establish sock', sock)
-  local conn_obj = {
-    host = host ;
-    port = port ;
-    sock = sock ;
-  }
-
-  _gconfig.host = host
-  _gconfig.port = port
-  _gconfig.loop = loop
-  _gconfig.cb = cb
+  	--print('establish sock', sock)
+  	local conn_obj = {
+    		host = host ;
+    		port = port ;
+    		sock = sock ;
+  	}
 
   
-  if cb and loop then
-    local ev = require 'ev'
-    local fd = sock:getfd()
-    local io_watcher = ev.IO.new(cb, fd, ev.READ)
-    io_watcher:start(loop)
-    conn_obj.io_watcher = io_watcher
-    flag_async = true
-  end
+	if cb and loop then
+		local ev = require 'ev'
+		local fd = sock:getfd()
+		local io_watcher = ev.IO.new(cb, fd, ev.READ)
+		io_watcher:start(loop)
+		conn_obj.io_watcher = io_watcher
+		flag_async = true
+	end
   
 	return setmetatable (conn_obj, connmt)
 end
 
-local function reconnect ()
+local function reconnect (host, port)
 	
-	local host = _gconfig.host or "localhost"
-	local port = _gconfig.port or 27017
+	local host = host or "localhost"
+	local port = port or 27017
 
 	local sock = socket.connect ( host , port )
 	assert(sock, 'mongodb connect failed.')
-  	--print('establish sock', sock)
-  	--local conn_obj = {
-    	--	host = host ;
-    	--	port = port ;
-    	--	sock = sock ;
-  	--}
-  
-	--return setmetatable (conn_obj, connmt)
+	
 	return sock
 
 end
@@ -141,8 +128,7 @@ local function docmd ( conn , opcode , message ,  reponseTo )
 	local ret, sent = pcall ( conn.sock.send, conn.sock, m )
 	-- if socket broken, reconnect it
 	if not ret then
-		local sock = reconnect()
-		conn.sock = sock
+		conn.sock = reconnect(conn.host, conn.port)
 		-- and retry to send
 		sent = assert ( conn.sock:send ( m ) )
 	end
