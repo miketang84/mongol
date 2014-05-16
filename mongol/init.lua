@@ -41,6 +41,8 @@ local connmethods = { }
 local connmt = { __index = connmethods }
 
 local flag_async = false
+local _gconfig = {}
+
 local function connect ( host , port, loop, cb)
 	host = host or "localhost"
 	port = port or 27017
@@ -53,6 +55,12 @@ local function connect ( host , port, loop, cb)
     port = port ;
     sock = sock ;
   }
+
+  _gconfig.host = host
+  _gconfig.port = port
+  _gconfig.loop = loop
+  _gconfig.cb = cb
+
   
   if cb and loop then
     local ev = require 'ev'
@@ -64,6 +72,24 @@ local function connect ( host , port, loop, cb)
   end
   
 	return setmetatable (conn_obj, connmt)
+end
+
+local function reconnect ()
+	
+	local host = _gconfig.host or "localhost"
+	local port = _gconfig.port or 27017
+
+	local sock = socket.connect ( host , port )
+	assert(sock, 'mongodb connect failed.')
+  	--print('establish sock', sock)
+  	local conn_obj = {
+    		host = host ;
+    		port = port ;
+    		sock = sock ;
+  	}
+  
+	return setmetatable (conn_obj, connmt)
+
 end
 
 local opcodes = {
@@ -109,8 +135,15 @@ local function docmd ( conn , opcode , message ,  reponseTo )
 	opcode = num_to_le_uint ( assert ( opcodes [ opcode ] ) )
 
 	local m = compose_msg ( requestID , reponseTo , opcode , message )
-  -- send query queue to mongodb
-	local sent = assert ( conn.sock:send ( m ) )
+  	-- send query queue to mongodb
+	--local sent = assert ( conn.sock:send ( m ) )
+	local ret, sent = pcall ( conn.sock.send, conn.sock, m )
+	-- if socket broken, reconnect it
+	if not ret then
+		conn = reconnect()
+		-- and retry to send
+		sent = assert ( conn.sock:send ( m ) )
+	end
 	return id , sent
 end
 
