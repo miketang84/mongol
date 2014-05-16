@@ -82,13 +82,14 @@ local function reconnect ()
 	local sock = socket.connect ( host , port )
 	assert(sock, 'mongodb connect failed.')
   	--print('establish sock', sock)
-  	local conn_obj = {
-    		host = host ;
-    		port = port ;
-    		sock = sock ;
-  	}
+  	--local conn_obj = {
+    	--	host = host ;
+    	--	port = port ;
+    	--	sock = sock ;
+  	--}
   
-	return setmetatable (conn_obj, connmt)
+	--return setmetatable (conn_obj, connmt)
+	return sock
 
 end
 
@@ -140,7 +141,8 @@ local function docmd ( conn , opcode , message ,  reponseTo )
 	local ret, sent = pcall ( conn.sock.send, conn.sock, m )
 	-- if socket broken, reconnect it
 	if not ret then
-		conn = reconnect()
+		local sock = reconnect()
+		conn.sock = sock
 		-- and retry to send
 		sent = assert ( conn.sock:send ( m ) )
 	end
