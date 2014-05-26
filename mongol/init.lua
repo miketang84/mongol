@@ -304,8 +304,8 @@ function dbmethods:count ( collection , query )
 		} , "count" ) ) )
 --]]
 	local r = assert ( self.conn:cmd ( self.db, {
-			{'count', collection},
-            {'query', query or {}},
+			{'_order_', 'count', collection},
+            {'_order_', 'query', query or {}},
 		}) )
 	return r.n
 end
@@ -392,10 +392,10 @@ function dbmethods:auth ( username , password )
 ---[[	
     return self.conn:cmd ( self.db ,{
 			--authenticate = true ;
-            {'authenticate', true },
-            {'user', username },
-            {'nonce', r.nonce },
-            {'key', digest }
+            {'_order_', 'authenticate', true },
+            {'_order_', 'user', username },
+            {'_order_', 'nonce', r.nonce },
+            {'_order_', 'key', digest }
 		 })  ~= nil
 --]]
 end
