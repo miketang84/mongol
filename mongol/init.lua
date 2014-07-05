@@ -128,9 +128,11 @@ local function docmd ( conn , opcode , message ,  reponseTo )
 	local ret, sent = pcall ( conn.sock.send, conn.sock, m )
 	-- if socket broken, reconnect it
 	if not ret then
+		print('mongol connect error, try to reconnect')
 		conn.sock = reconnect(conn.host, conn.port)
 		-- and retry to send
 		sent = assert ( conn.sock:send ( m ) )
+		print('reconnect ret: ', sent)
 	end
 	return id , sent
 end
