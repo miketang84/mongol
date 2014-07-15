@@ -72,10 +72,16 @@ local function reconnect (host, port)
 	
 	local host = host or "localhost"
 	local port = port or 27017
+	local sock = nil
 
-	local sock = socket.connect ( host , port )
-	assert(sock, 'mongodb connect failed.')
-	
+	while not sock do
+		-- sleep for 50 miliseconds
+		socket.sleep(0.05)
+		print('start to retry to connect ', host, port)
+		sock = socket.connect ( host , port )
+		--assert(sock, 'mongodb connect failed.')
+	end
+
 	return sock
 
 end
